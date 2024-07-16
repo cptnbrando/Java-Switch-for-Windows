@@ -6,4 +6,3 @@ It's a simple .bat file that updates the User's PATH and System's PATH env varia
 Right now, a restart may be required after running. Once I figure that out, I'll transcend from the shackles of being a mere mortal, and become a Java master, a living god!!!!
 
 Godspeed y'all
-Captain Brando
