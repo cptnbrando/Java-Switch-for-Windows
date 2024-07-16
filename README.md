@@ -1,4 +1,4 @@
-# JavaSwitcher-BatFile
+# Java Switch for Windows - A .bat file to rescue you from java version hell
 Have you ever had 6 versions of Java installed and needed to swap between them quickly on Windows? This might help.
 
 It's a .bat file that updates the User's PATH and System's PATH env variables with a new JDK, updates the JAVA_HOME env variables, swaps out the symbolic links/files in the javapath folder for the selected jdk, and updates the Registry \.jar and \jarfile\shell\open\command keys to get double clicking a .jar in windows explorer working with your newly selected JDK. 
