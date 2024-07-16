@@ -1,7 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
 
-:: @echo off keeps the automatic logs from clogging up the terminal
+:: @echo off keeps the automatic logs from clogging up the terminal. While it mitigates the logs, you may still see other messages. Disregard them.
 :: setlocal enabledelayedexpansion is required for variables to work in loops
 
 :: Welcome to Brando's Java switcher, a quick batch script to change between versions of Java in the blink of an eye (or a couple blinks anyway)
@@ -191,12 +191,14 @@ copy "%JAVA_HOME%\bin\jshell.exe" "%_JAVAPATH%\jshell.exe"
 REG ADD "HKLM\Software\JavaSoft\Java Runtime Environment" /v CurrentVersion /d "%JAVA_VERSION%" /f
 REG ADD "HKLM\Software\JavaSoft\Java Development Kit" /v CurrentVersion /d "%JAVA_VERSION%" /f
 
-:: Show the path to the java executable
-where java
+:: Swap out these values in the Registry so double clicking a .jar in Windows Explorer works with new JDK version
+reg add "HKCR\.jar" /ve /d "jarfile" /f
+reg add "HKCR\jarfile\shell\open\command" /ve /d "\"%JAVA_HOME%\bin\javaw.exe\" -jar \"%%1\" %*" /f
 
 echo.
 echo.
 echo "Switched to Java %1. Please restart the command prompt to apply changes."
+
 ENDLOCAL
 pause
 goto :EOF
