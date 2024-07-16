@@ -99,8 +99,8 @@ echo New User PATH generated. Now creating System PATH.
 echo.
 
 :: Now we gotta do the same for the System PATH, using the Registry
-:: First, backup the system PATH
-reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PATH > backup_path.txt
+:: First, backup the system PATH. Uncomment this if you want to, but it might leave files wherever you run this
+:: reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PATH > backup_path.txt
 
 :: Then, read the System PATH
 for /f "tokens=2* delims= " %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path') do set SYSTEMPATH=%%b
