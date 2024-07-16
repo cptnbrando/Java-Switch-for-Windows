@@ -148,6 +148,7 @@ SETX -m JAVA_HOME "%JAVA_HOME%"
 SETX PATH "%newPath%"
 
 :: Set the System PATH
+SETX PATH "%newSysPath%" /M
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PATH /t REG_EXPAND_SZ /d "%newSysPath%" /f
 
 :: Aside from updating the User/System PATH and the JAVA_HOME env variables, Java needs specific files in its javapath folders
@@ -193,9 +194,7 @@ REG ADD "HKLM\Software\JavaSoft\Java Development Kit" /v CurrentVersion /d "%JAV
 :: Show the path to the java executable
 where java
 
-:: Refresh PATH
-set PATH=%PATH%
-
+echo.
 echo.
 echo "Switched to Java %1. Please restart the command prompt to apply changes."
 ENDLOCAL
