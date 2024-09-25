@@ -62,7 +62,7 @@ echo %currentUserPath%
 
 echo.
 echo Getting System PATH variable:
-for %%a in ("%SystemRoot%") do set SYSTEMROOT=%%a
+set SYSTEMROOT=%SystemRoot%
 
 echo.
 
