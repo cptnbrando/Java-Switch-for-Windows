@@ -1,7 +1,10 @@
 @echo off
-setlocal enabledelayedexpansion
+SETLOCAL ENABLEDELAYEDEXPANSION >nul 2>&1
 
-:: @echo off keeps the automatic logs from clogging up the terminal. While it mitigates the logs, you may still see other messages. Disregard them.
+:: Suppress all command output
+command >nul 2>&1
+
+:: @echo off keeps the automatic logs from clogging up the terminal
 :: setlocal enabledelayedexpansion is required for variables to work in loops
 
 :: Welcome to Brando's Java switcher, a quick batch script to change between versions of Java in the blink of an eye (or a couple blinks anyway)
@@ -43,7 +46,7 @@ IF "%1" == "7" (
 
 :: Update PATH environment variable
 :: Get the current user PATH
-set "currentUserPath=%PATH%"
+set "currentUserPath=%PATH%" 2>nul
 
 :: Windows %PATH% brings in both the User PATH and System PATH, so we need to log and skip duplicates
 
@@ -51,7 +54,7 @@ set "currentUserPath=%PATH%"
 set "newPath="
 set "seen="
 
-set "newJavaPath=%JAVA_HOME%\bin"
+set "newJavaPath=%JAVA_HOME%\bin" 2>nul
 
 echo.
 echo Setting new JDK PATH variable to %newJavaPath%
@@ -62,23 +65,22 @@ echo %currentUserPath%
 
 echo.
 echo Getting System PATH variable:
-set SYSTEMROOT=%SystemRoot%
+set SYSTEMROOT=%SystemRoot% 2>nul
 
 echo.
 
 :: Loop through each element in the PATH
 for %%a in ("%currentUserPath:;=" "%") do (
-    set "item=%%~a"
+    set "item=%%~a" 2>nul
     @REM echo Processing item: !item!
+
     if "!item:~0,21!"=="C:\Program Files\Java" (
         echo Replacing !item! with %newJavaPath%
         set "item=%newJavaPath%"
     )
 
     :: Check if the item is already in the seen list
-    :: Brando's spicy touch, as the find command triggers on partial strings
-    :: By adding a 'y' before and after the item, it will only look for exact matches
-    call :CheckDuplicate "y!item!y"
+    call :CheckDuplicate "y!item!y" 2>nul
 
     :: If the item is not a duplicate, add it to the new PATH
     if !duplicate! equ 0 (
@@ -89,8 +91,6 @@ for %%a in ("%currentUserPath:;=" "%") do (
         )
         :: Added 'y' before and after seen item, to avoid partial matches
         set "seen=!seen!y!item!y;"
-    ) else (
-        echo Skipping duplicate item: !item!
     )
 )
 
@@ -99,14 +99,14 @@ echo New User PATH generated. Now creating System PATH.
 echo.
 
 :: Now we gotta do the same for the System PATH, using the Registry
-:: First, backup the system PATH. Uncomment this if you want to, but it might leave files wherever you run this
+:: First, backup the system PATH Uncomment this if you want to, but it might leave files wherever you run this
 :: reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PATH > backup_path.txt
 
 :: Then, read the System PATH
-for /f "tokens=2* delims= " %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path') do set SYSTEMPATH=%%b
+for /f "tokens=2* delims= " %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path 2^>nul') do set SYSTEMPATH=%%b
 
 :: Create new System PATH variable, and clear the seen list
-:: I tried making this a subroutine but windows laughed in my face when it saw the PATH variable contained '(' and ')' characters.
+:: I tried making this repeated code a subroutine but windows laughed in my face when it saw the PATH variable contained '(' and ')' characters.
 :: If you wanna tidy this up, look for those characters in the PATH and replace them with something valid, then swap them back when you set the PATH
 set "newSysPath="
 set "seen="
@@ -141,14 +141,14 @@ echo.
 :: Update the JAVA_HOME env variable
 echo "Setting JAVA_HOME to %JAVA_HOME%"
 echo "Updating PATH to %newPath%"
-SETX JAVA_HOME "%JAVA_HOME%"
-SETX -m JAVA_HOME "%JAVA_HOME%"
+SETX JAVA_HOME "%JAVA_HOME%" >nul 2>&1
+SETX -m JAVA_HOME "%JAVA_HOME%" >nul 2>&1
 
 :: Set the User PATH
-SETX PATH "%newPath%"
+SETX PATH "%newPath%" >nul 2>&1
 
 :: Set the System PATH
-SETX PATH "%newSysPath%" /M
+SETX PATH "%newSysPath%" /M >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PATH /t REG_EXPAND_SZ /d "%newSysPath%" /f
 
 :: Aside from updating the User/System PATH and the JAVA_HOME env variables, Java needs specific files in its javapath folders
