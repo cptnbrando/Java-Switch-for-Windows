@@ -4,6 +4,24 @@ SETLOCAL ENABLEDELAYEDEXPANSION >nul 2>&1
 :: Suppress all command output
 command >nul 2>&1
 
+:: Check for admin privileges
+NET SESSION >nul 2>&1
+IF %ERRORLEVEL% NEQ 0 (
+    echo "This script requires administrator privileges."
+    echo "Attempting to elevate..."
+    
+    :: Re-launch the script with admin privileges and pass all arguments
+    powershell -Command "Start-Process cmd -ArgumentList '/c \"%~f0\" %*' -Verb RunAs"
+    
+    :: Exit this script
+    exit /b
+)
+
+:: Continue with the rest of the script as admin
+echo "Running with administrator privileges..."
+:: Continue with the rest of the script as admin
+echo "Running with administrator privileges..."
+
 :: @echo off keeps the automatic logs from clogging up the terminal
 :: setlocal enabledelayedexpansion is required for variables to work in loops
 
@@ -162,30 +180,78 @@ SET "_JAVAPATH=C:\Program Files\Common Files\Oracle\Java\javapath"
 echo.
 echo Removing existing Java symbolic links
 
-:: Remove existing symbolic links
-DEL "%JAVAPATH%\java.exe"
-DEL "%JAVAPATH%\javaw.exe"
-DEL "%JAVAPATH%\javaws.exe"
-DEL "%_JAVAPATH%\java.exe"
-DEL "%_JAVAPATH%\javaw.exe"
-DEL "%_JAVAPATH%\javaws.exe"
+:: Remove existing symbolic links if they exist
+IF EXIST "%JAVAPATH%\java.exe" (
+    DEL "%JAVAPATH%\java.exe"
+) ELSE (
+    echo "No existing java.exe link found."
+)
+
+IF EXIST "%JAVAPATH%\javaw.exe" (
+    DEL "%JAVAPATH%\javaw.exe"
+) ELSE (
+    echo "No existing javaw.exe link found."
+)
+
+IF EXIST "%JAVAPATH%\javaws.exe" (
+    DEL "%JAVAPATH%\javaws.exe"
+) ELSE (
+    echo "%JAVAPATH% No existing javaws.exe link found."
+)
+
+IF EXIST "%_JAVAPATH%\java.exe" (
+    DEL "%_JAVAPATH%\java.exe"
+) ELSE (
+    echo "No existing _javapath java.exe link found."
+)
+
+IF EXIST "%_JAVAPATH%\javaw.exe" (
+    DEL "%_JAVAPATH%\javaw.exe"
+) ELSE (
+    echo "No existing _javapath javaw.exe link found."
+)
+
+IF EXIST "%_JAVAPATH%\javaws.exe" (
+    DEL "%_JAVAPATH%\javaws.exe"
+) ELSE (
+    echo "No existing _javapath javaws.exe link found."
+)
 
 echo.
 echo Creating new Java symbolic links
 
 :: Create new symbolic links
-MKLINK "%JAVAPATH%\java.exe" "%JAVA_HOME%\bin\java.exe"
-MKLINK "%JAVAPATH%\javaw.exe" "%JAVA_HOME%\bin\javaw.exe"
-MKLINK "%JAVAPATH%\javaws.exe" "%JAVA_HOME%\bin\javaws.exe"
-MKLINK "%_JAVAPATH%\java.exe" "%JAVA_HOME%\bin\java.exe"
-MKLINK "%_JAVAPATH%\javaw.exe" "%JAVA_HOME%\bin\javaw.exe"
-MKLINK "%_JAVAPATH%\javaws.exe" "%JAVA_HOME%\bin\javaws.exe"
+IF NOT EXIST "%JAVAPATH%" (
+    echo "Creating directory for JAVAPATH: %JAVAPATH%"
+    mkdir "%JAVAPATH%"
+)
 
-:: Copy javac.exe and jshell.exe
-copy "%JAVA_HOME%\bin\javac.exe" "%JAVAPATH%\javac.exe"
-copy "%JAVA_HOME%\bin\javac.exe" "%_JAVAPATH%\javac.exe"
-copy "%JAVA_HOME%\bin\jshell.exe" "%JAVAPATH%\jshell.exe"
-copy "%JAVA_HOME%\bin\jshell.exe" "%_JAVAPATH%\jshell.exe"
+IF NOT EXIST "%_JAVAPATH%" (
+    echo "Creating directory for _JAVAPATH: %_JAVAPATH%"
+    mkdir "%_JAVAPATH%"
+)
+
+MKLINK "%JAVAPATH%\java.exe" "%JAVA_HOME%\bin\java.exe" || echo "Failed to create symbolic link for java.exe"
+MKLINK "%JAVAPATH%\javaw.exe" "%JAVA_HOME%\bin\javaw.exe" || echo "Failed to create symbolic link for javaw.exe"
+MKLINK "%JAVAPATH%\javaws.exe" "%JAVA_HOME%\bin\javaws.exe" || echo "Failed to create symbolic link for javaws.exe"
+MKLINK "%_JAVAPATH%\java.exe" "%JAVA_HOME%\bin\java.exe" || echo "Failed to create symbolic link for _javapath java.exe"
+MKLINK "%_JAVAPATH%\javaw.exe" "%JAVA_HOME%\bin\javaw.exe" || echo "Failed to create symbolic link for _javapath javaw.exe"
+MKLINK "%_JAVAPATH%\javaws.exe" "%JAVA_HOME%\bin\javaws.exe" || echo "Failed to create symbolic link for _javapath javaws.exe"
+
+:: Check if Java files exist before copying
+IF EXIST "%JAVA_HOME%\bin\javac.exe" (
+    copy "%JAVA_HOME%\bin\javac.exe" "%JAVAPATH%\javac.exe" || echo "Failed to copy javac.exe"
+    copy "%JAVA_HOME%\bin\javac.exe" "%_JAVAPATH%\javac.exe" || echo "Failed to copy _javapath javac.exe"
+) ELSE (
+    echo "javac.exe not found in %JAVA_HOME%\bin."
+)
+
+IF EXIST "%JAVA_HOME%\bin\jshell.exe" (
+    copy "%JAVA_HOME%\bin\jshell.exe" "%JAVAPATH%\jshell.exe" || echo "Failed to copy jshell.exe"
+    copy "%JAVA_HOME%\bin\jshell.exe" "%_JAVAPATH%\jshell.exe" || echo "Failed to copy _javapath jshell.exe"
+) ELSE (
+    echo "jshell.exe not found in %JAVA_HOME%\bin."
+)
 
 :: Update the registry keys
 REG ADD "HKLM\Software\JavaSoft\Java Runtime Environment" /v CurrentVersion /d "%JAVA_VERSION%" /f
@@ -195,7 +261,6 @@ REG ADD "HKLM\Software\JavaSoft\Java Development Kit" /v CurrentVersion /d "%JAV
 reg add "HKCR\.jar" /ve /d "jarfile" /f
 reg add "HKCR\jarfile\shell\open\command" /ve /d "\"%JAVA_HOME%\bin\javaw.exe\" -jar \"%%1\" %*" /f
 
-echo.
 echo.
 echo "Switched to Java %1. Please restart the command prompt to apply changes."
 
@@ -207,3 +272,4 @@ goto :EOF
 set "duplicate=0"
 echo !seen! | find "!%~1!" >nul && set "duplicate=1"
 goto :EOF
+
